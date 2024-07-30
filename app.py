@@ -28,15 +28,24 @@ def recognize_speech():
         return None
 
 def generate_response(prompt):
-    response = openai.Completion.create(
-        engine="davinci",
-        prompt=prompt,
-        max_tokens=150
+    client = openai.OpenAI()
+    stream = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[
+            {"role": "system", "content": "You are a helpful assistant."},
+            {"role": "user", "content": prompt}
+        ],
+        stream=True,
     )
-    return response.choices[0].text.strip()
+    response_text = ""
+    for chunk in stream:
+        if chunk.choices[0].delta.content is not None:
+            response_text += chunk.choices[0].delta.content
+            print(chunk.choices[0].delta.content, end="")
+    return response_text
 
 if __name__ == "__main__":
     spoken_text = recognize_speech()
     if spoken_text:
         response = generate_response(spoken_text)
-        print(f"AI Response: {response}")
+        print(f"\nAI Response: {response}")
